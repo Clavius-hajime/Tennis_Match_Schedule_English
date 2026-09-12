@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tennis Match Schedule</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="shortcut icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#2463eb">
+
+<style>
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+    background:#f6f7f9;
+    margin:0;
+    color:#222;
+  }
+  .wrap{
+    max-width:850px;
+    margin:40px auto;
+    padding:0 16px 40px;
+  }
+  h1{font-size:28px;margin-bottom:20px}
+  .box{
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+  }
+  .inputs{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+  }
+  label{
+    display:block;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:6px;
+  }
+  input{
+    width:100%;
+    box-sizing:border-box;
+    padding:10px;
+    font-size:16px;
+    border:1px solid #bbb;
+    border-radius:8px;
+  }
+  button{
+    margin-top:16px;
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    font-weight:700;
+    border:0;
+    border-radius:8px;
+    background:#2463eb;
+    color:#fff;
+    cursor:pointer;
+  }
+  .round{
+    border-top:1px solid #ddd;
+    padding:16px 0;
+  }
+  .round:first-child{border-top:0}
+  .round h3{
+    margin:0 0 10px;
+    font-size:18px;
+  }
+  .match{
+    padding:8px 0;
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .match input[type="checkbox"]{
+    width:20px;
+    height:20px;
+    margin:0;
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .match.done .match-text{
+    opacity:.42;
+    text-decoration:line-through;
+  }
+  .match-text{
+    transition:opacity .15s ease;
+  }
+  .vs{
+    font-weight:800;
+    margin:0 10px;
+    display:inline-block;
+  }
+  .error{
+    color:#c00;
+    margin-top:10px;
+  }
+  @media(max-width:650px){
+    .inputs{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎾 Tennis Match Schedule</h1>
+
+  <div class="box">
+    <div class="inputs">
+      <div>
+        <label>Number of Players</label>
+        <input id="players" type="number" min="4" value="8">
+      </div>
+      <div>
+        <label>Number of Courts</label>
+        <input id="courts" type="number" min="1" value="1">
+      </div>
+      <div>
+        <label>Number of Rounds</label>
+        <input id="rounds" type="number" min="1" value="12">
+      </div>
+    </div>
+
+    <button onclick="generate()">Generate Schedule</button>
+    <div id="error" class="error"></div>
+  </div>
+
+  <div id="result" class="box"></div>
+</div>
+
+<script>
+function generate(){
+  const n = Number(document.getElementById('players').value);
+  const courts = Number(document.getElementById('courts').value);
+  const rounds = Number(document.getElementById('rounds').value);
+  const result = document.getElementById('result');
+  const error = document.getElementById('error');
+
+  error.textContent = '';
+
+  if(n < 4){
+    error.textContent = 'Please enter at least 4 players.';
+    return;
+  }
+
+  const usableCourts = Math.min(courts, Math.floor(n / 4));
+  if(usableCourts < 1){
+    error.textContent = 'Not enough players to create a doubles match.';
+    return;
+  }
+
+  const numbers = Array.from({length:n}, (_,i)=>i+1);
+  const activeCount = usableCourts * 4;
+  let html = '';
+
+  for(let r=0; r<rounds; r++){
+    // 毎試合、番号を1つずつ前にずらすだけのシンプルな方式
+    const order = numbers.slice(r % n).concat(numbers.slice(0, r % n));
+    const active = order.slice(0, activeCount);
+    const rest = order.slice(activeCount);
+
+    html += `<div class="round"><h3>Round ${r+1}</h3>`;
+
+    for(let c=0; c<usableCourts; c++){
+      const p = active.slice(c*4, c*4+4);
+      const courtLabel = usableCourts === 1 ? '' : `Court ${c+1}: `;
+      html += `<div class="match">
+        <input type="checkbox" aria-label="Match completed" onchange="this.parentElement.classList.toggle('done', this.checked)">
+        <span class="match-text">${courtLabel}${p[0]} ${p[1]} <span class="vs">VS</span> ${p[2]} ${p[3]}</span>
+      </div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  result.innerHTML = html;
+}
+
+generate();
+</script>
+</body>
+</html>
